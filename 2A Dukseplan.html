@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dukseoversigt - 2. Klasse</title>
+    <!-- Indlæser Tailwind CSS for let og responsivt design -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7ffee;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .header-bg {
+            background-color: #4f46e5;
+        }
+        .task-cell {
+            transition: transform 0.1s, box-shadow 0.1s;
+            cursor: pointer;
+            text-align: center;
+            min-width: 120px;
+        }
+        .task-cell:hover:not(.edit-mode-active) {
+            transform: scale(1.02);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .highlight-today {
+            background-color: #fcd34d !important;
+            font-weight: 700;
+            border: 4px solid #f97316;
+        }
+        .completed {
+            background-color: #d1fae5;
+        }
+        .day-completed {
+            background-color: #a7f3d0 !important;
+            opacity: 0.95;
+        }
+        .day-completed .day-label {
+            text-decoration: line-through;
+            opacity: 0.8;
+        }
+        .student-name {
+            padding: 2px 4px;
+            display: inline-block;
+            font-weight: 800;
+        }
+        /* Styling for dropdowns inde i tabellen under redigering */
+        .cell-select {
+            font-size: 0.875rem;
+            padding: 2px;
+            border-radius: 4px;
+            border: 1px solid #4f46e5;
+            width: 100%;
+            font-weight: bold;
+        }
+        /* Særlig fremhævning af kaptajn-kolonnen */
+        .captain-bg {
+            background-color: #fdf2f8; /* Meget lys pink/lilla */
+        }
+    </style>
+</head>
+<body>
+
+<div class="container rounded-3xl overflow-hidden">
+    <!-- Hovedoverskrift -->
+    <header class="header-bg p-6 lg:p-10 text-white text-center rounded-t-3xl relative">
+        <h1 class="text-4xl lg:text-5xl font-extrabold mb-1 lg:mb-0">Dukseoversigt</h1>
+        <p class="text-xl lg:text-2xl font-medium opacity-90 mt-2">Hvem har ansvar i dag? ✅</p>
+        
+        <button id="toggle-edit-button" class="absolute top-4 right-4 p-3 rounded-full bg-indigo-700 hover:bg-indigo-800 text-white transition duration-300 shadow-lg text-2xl leading-none">
+            ⚙️
+        </button>
+    </header>
+
+    <!-- Redigeringssektion -->
+    <div id="name-edit-section" class="p-4 lg:p-8 bg-indigo-50 border-b border-indigo-100 hidden">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+            <h2 class="text-xl font-black text-indigo-900">Redigeringstilstand 🛠️</h2>
+            <button id="reset-rotation-btn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-bold text-sm transition shadow">
+                Nulstil til standard rotation
+            </button>
+        </div>
+        
+        <div class="mb-6">
+            <h3 class="text-sm font-bold text-indigo-700 mb-3">Vælg ugens 5 grund-dukse:</h3>
+            <div id="name-selectors" class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                <!-- Select-menuer for uge-basis -->
+            </div>
+        </div>
+        <p class="text-sm text-indigo-600 italic text-center">Du kan ændre navne direkte i skemaet nedenfor ved at klikke på dem.</p>
+    </div>
+
+    <!-- Tabel -->
+    <div class="p-4 lg:p-8 bg-white overflow-x-auto">
+        <table id="roster-table" class="min-w-full divide-y divide-gray-200">
+            <thead>
+                <tr id="table-header-row">
+                    <th class="p-3 lg:p-4 text-left text-xl lg:text-2xl font-black text-gray-800 rounded-tl-xl bg-gray-100 w-1/12"></th>
+                    <th class="p-3 lg:p-4 text-center bg-purple-100 rounded-t-xl text-sm font-bold"><span class="text-3xl block mb-1">✨</span><span>Rydde op</span></th>
+                    <th class="p-3 lg:p-4 text-center bg-green-100 rounded-t-xl text-sm font-bold"><span class="text-3xl block mb-1">🧽</span><span>Tørre borde</span></th>
+                    <th class="p-3 lg:p-4 text-center bg-orange-100 rounded-t-xl text-sm font-bold"><span class="text-3xl block mb-1">🧹</span><span>Feje gulv</span></th>
+                    <th class="p-3 lg:p-4 text-center bg-blue-100 rounded-t-xl text-sm font-bold"><span class="text-3xl block mb-1">🗑️</span><span>Tømme skrald</span></th>
+                    <th class="p-3 lg:p-4 text-center bg-pink-100 rounded-tr-xl text-sm font-bold"><span class="text-3xl block mb-1">👑</span><span>Kaptajn</span></th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 text-gray-900" id="roster-body">
+                <!-- Indsættes via JS -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const classList = [
+        "Albert", "Arianna", "Asbjørn", "Bertram", "Ellen", 
+        "Emma E.", "Emma H.", "Falke", "Kavyansh", "Lærke", "Lewis", 
+        "Malou F.", "Malou H.", "Malthe", "Marie", "Mateo", "Nicolai", 
+        "Noomi", "Oliver", "Oskar", "Reyhaneh", "Rosa", "Severin", "Wilde"
+    ];
+
+    const rotationPattern = [
+        [0, 1, 2, 3, 4], [1, 2, 3, 4, 0], [2, 3, 4, 0, 1], [3, 4, 0, 1, 2], [4, 0, 1, 2, 3]
+    ];
+    
+    const COMPLETION_KEY = 'duks_weekly_completion_status';
+    const STUDENT_NAMES_KEY = 'duks_student_names';
+    const MANUAL_OVERRIDE_KEY = 'duks_manual_overrides'; 
+
+    const defaultSelection = ["Albert", "Arianna", "Asbjørn", "Bertram", "Ellen"];
+    
+    let selectedStudents = loadSelectedStudents();
+    let weeklyStatus = loadStatus(COMPLETION_KEY);
+    let manualOverrides = loadStatus(MANUAL_OVERRIDE_KEY);
+    let isEditMode = false;
+
+    function loadSelectedStudents() {
+        const stored = localStorage.getItem(STUDENT_NAMES_KEY);
+        let names = stored ? JSON.parse(stored) : defaultSelection;
+        return names.map(n => classList.includes(n) ? n : classList[0]);
+    }
+
+    function loadStatus(key) {
+        const stored = localStorage.getItem(key);
+        return stored ? JSON.parse(stored) : {};
+    }
+
+    function saveStatus(key, status) {
+        localStorage.setItem(key, JSON.stringify(status));
+    }
+
+    function renderSelectors() {
+        const container = document.getElementById('name-selectors');
+        container.innerHTML = '';
+        selectedStudents.forEach((currentName, index) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'flex flex-col';
+            const label = document.createElement('label');
+            label.className = 'text-xs font-bold text-indigo-600 mb-1 ml-1';
+            label.textContent = `Elev ${index + 1}`;
+            
+            const select = document.createElement('select');
+            select.className = 'p-2 border-2 border-indigo-200 rounded-lg font-semibold text-sm focus:ring-2 focus:ring-indigo-400 outline-none bg-white shadow-sm';
+            
+            classList.forEach(name => {
+                const opt = document.createElement('option');
+                opt.value = name;
+                opt.textContent = name;
+                if (name === currentName) opt.selected = true;
+                select.appendChild(opt);
+            });
+
+            select.onchange = (e) => {
+                selectedStudents[index] = e.target.value;
+                localStorage.setItem(STUDENT_NAMES_KEY, JSON.stringify(selectedStudents));
+                manualOverrides = {}; 
+                saveStatus(MANUAL_OVERRIDE_KEY, manualOverrides);
+                weeklyStatus = {};
+                saveStatus(COMPLETION_KEY, weeklyStatus);
+                renderRosterTable();
+            };
+
+            wrapper.appendChild(label);
+            wrapper.appendChild(select);
+            container.appendChild(wrapper);
+        });
+    }
+
+    function renderRosterTable() {
+        const body = document.getElementById('roster-body');
+        body.innerHTML = '';
+        
+        const today = new Date();
+        let currentDayIndex = today.getDay(); 
+        if (currentDayIndex === 0 || currentDayIndex === 6) currentDayIndex = 1;
+        const rosterIndex = currentDayIndex - 1;
+
+        const days = ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag"];
+        const taskKeys = ['oprydning', 'tørreBorde', 'feje', 'tømmeSkrald', 'hjælper'];
+        const colors = ['purple', 'green', 'orange', 'blue', 'pink'];
+
+        days.forEach((day, dIdx) => {
+            const row = body.insertRow();
+            const isToday = dIdx === rosterIndex;
+            row.id = `day-row-${day}`;
+            if (isToday) row.classList.add('highlight-today');
+
+            let dayCell = row.insertCell();
+            dayCell.className = `p-3 lg:p-4 text-left text-lg font-bold rounded-l-2xl ${isToday ? 'bg-orange-400 text-white' : 'bg-gray-100'} day-label`;
+            dayCell.textContent = day;
+
+            taskKeys.forEach((tKey, tIdx) => {
+                let cell = row.insertCell();
+                const uniqueId = `${day}_${tKey}`;
+                
+                const isCaptain = tKey === 'hjælper';
+                cell.className = `task-cell p-3 lg:p-4 text-base border-${colors[tIdx]}-300 ${isCaptain ? 'captain-bg' : ''}`;
+                
+                if (isEditMode) cell.classList.add('edit-mode-active');
+                cell.dataset.id = uniqueId;
+                
+                const studentIdxInRotation = rotationPattern[dIdx][tIdx];
+                const defaultName = selectedStudents[studentIdxInRotation];
+                const displayName = manualOverrides[uniqueId] || defaultName;
+
+                if (isEditMode) {
+                    const select = document.createElement('select');
+                    select.className = 'cell-select';
+                    classList.forEach(name => {
+                        const opt = document.createElement('option');
+                        opt.value = name;
+                        opt.textContent = name;
+                        if (name === displayName) opt.selected = true;
+                        select.appendChild(opt);
+                    });
+                    select.onclick = (e) => e.stopPropagation();
+                    select.onchange = (e) => {
+                        manualOverrides[uniqueId] = e.target.value;
+                        saveStatus(MANUAL_OVERRIDE_KEY, manualOverrides);
+                        renderRosterTable();
+                    };
+                    cell.appendChild(select);
+                } else {
+                    cell.innerHTML = `
+                        <span class="student-name">${displayName}</span>
+                        <span class="completion-status text-sm hidden">✅</span>
+                    `;
+                    cell.onclick = () => toggleCompletion(cell);
+                    if (weeklyStatus[uniqueId]) applyVisuals(cell, true);
+                }
+                
+                if (tIdx === taskKeys.length - 1) cell.classList.add('rounded-r-2xl');
+            });
+            checkDayCompletion(day);
+        });
+    }
+
+    function applyVisuals(cell, isDone) {
+        const name = cell.querySelector('.student-name');
+        const check = cell.querySelector('.completion-status');
+        if (!name || !check) return;
+        if (isDone) {
+            check.classList.remove('hidden');
+            name.classList.add('line-through', 'opacity-50');
+            cell.classList.add('completed');
+        } else {
+            check.classList.add('hidden');
+            name.classList.remove('line-through', 'opacity-50');
+            cell.classList.remove('completed');
+        }
+    }
+
+    function toggleCompletion(cell) {
+        if (isEditMode) return;
+        const id = cell.dataset.id;
+        const isDone = !weeklyStatus[id];
+        weeklyStatus[id] = isDone;
+        if (!isDone) delete weeklyStatus[id];
+        saveStatus(COMPLETION_KEY, weeklyStatus);
+        applyVisuals(cell, isDone);
+        checkDayCompletion(id.split('_')[0]);
+    }
+
+    function checkDayCompletion(day) {
+        const row = document.getElementById(`day-row-${day}`);
+        const tasks = ['oprydning', 'tørreBorde', 'feje', 'tømmeSkrald', 'hjælper'];
+        const allDone = tasks.every(t => weeklyStatus[`${day}_${t}`]);
+        const label = row.querySelector('.day-label');
+        if (allDone) {
+            row.classList.add('day-completed');
+            label.classList.add('line-through', 'opacity-50');
+        } else {
+            row.classList.remove('day-completed');
+            label.classList.remove('line-through', 'opacity-50');
+        }
+    }
+
+    document.getElementById('toggle-edit-button').onclick = () => {
+        isEditMode = !isEditMode;
+        const sec = document.getElementById('name-edit-section');
+        sec.classList.toggle('hidden', !isEditMode);
+        renderRosterTable();
+    };
+
+    document.getElementById('reset-rotation-btn').onclick = () => {
+        manualOverrides = {};
+        saveStatus(MANUAL_OVERRIDE_KEY, manualOverrides);
+        renderRosterTable();
+    };
+
+    renderSelectors();
+    renderRosterTable();
+</script>
+
+</body>
+</html>
